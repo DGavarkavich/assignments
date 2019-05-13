@@ -1,0 +1,11 @@
+#Q1 
+print("Hello, World!")
+
+#Average and median cost across colleges
+sc%>%summarize(mean_cost=mean(costt4_a,na.rm=TRUE))
+sc%>%summarize(median_cost=median(costt4_a,na.rm=TRUE))
+
+#Stretch 1 Assuming Most Selective under 10%; Least Selective over 30%
+sc%>%filter(adm_rate<.1)%>%summarize(mean_earning1=mean(md_earn_wne_p6,na.rm=TRUE))
+sc%>%filter(adm_rate>.3)%>%summarize(mean_earning2=mean(md_earn_wne_p6,na.rm=TRUE))
+
