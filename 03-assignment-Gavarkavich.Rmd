@@ -1,0 +1,71 @@
+Assignment 3
+
+#RStudio Prep
+```{r  include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(forcats)
+library(RColorBrewer)
+library(knitr)
+```
+
+#Problem 1 - Graph of distribution of monthly income
+```{r}
+gg<-ggplot(at,aes(x=MonthlyIncome,fill=MonthlyIncome))
+gg<-gg+geom_bar()
+gg
+## A little confused to as why you'd want bar or histogram for this since only one salary has more than one case
+``` 
+
+  
+#Problem 2 - Graph of average level of monthly income by field of education
+```{r}
+
+at_sum<-at%>%
+  group_by(EducationField)%>%
+  summarize(Income_avg=mean(MonthlyIncome))
+
+
+at_sum
+
+```
+```{r}
+gg<-ggplot(at_sum,aes(x=EducationField,y=Income_avg))
+gg<-gg+geom_bar(stat="Identity")
+gg
+```
+
+#Problem 3 - Graph of average level of monthly income by field of education and gender
+```{r}
+at_sum<-at%>%
+  group_by(EducationField,Gender)%>%
+  summarize(Income2_avg=mean(MonthlyIncome))
+at_sum
+```
+
+```{r}
+## PLot it using a bar plot
+gg<-ggplot(at_sum,aes(x=fct_reorder(EducationField,Income2_avg),y=Income2_avg,color=Gender))
+gg<-gg+geom_bar(stat="identity",aes(fill=Gender),position="dodge")
+gg<-gg+ylab("Pr(Monthly Income)")+xlab("Education Field")
+gg
+```
+#Problem 4 - Graph of average levels of monthly income by field of education, gender, and job level
+```{r}
+
+at_sum<-at%>%
+  group_by(EducationField,Gender,JobLevel)%>%
+  summarize(Income_avg=mean(MonthlyIncome))%>%
+  arrange(-Income_avg)
+
+at_sum
+```
+```{r}
+gg<-ggplot(at_sum,aes(x=reorder(EducationField,Income_avg),
+                      y=Income_avg,
+                      fill=Gender))
+ gg<-gg+geom_bar(stat="identity",position="dodge")
+gg<-gg+facet_wrap(~JobLevel)
+gg<-gg+coord_flip()
+gg
+```

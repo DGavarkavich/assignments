@@ -1,0 +1,48 @@
+#Prepare R Studio
+```{r,echo=FALSE}
+rm(list=ls())
+library(tidyverse)
+library(forcats)
+library(ModelMetrics)
+library(modelr)
+```
+
+```{r}
+load("els_train.RData")
+```
+
+#Problem 1 - Regression
+```{r}
+mod5<-lm(bynels2r~byses1,data=els_train) 
+
+summary(mod5)
+confint(mod5)
+
+```
+
+
+#Problem 2 - RMSE
+```{r}
+
+rmse_5<-modelr::rmse(mod5,els_test);rmse_5
+```
+
+
+#Problem 3 - Covariate
+```{r}
+mod6<-lm(bynels2r~as.factor(bypared)+
+           byses1,
+          data=els_train)
+
+summary(mod6) 
+
+els_train<-els_train%>%add_predictions(mod6)%>%rename(pred2=pred)
+
+```
+
+
+#Problem 4 - RMSE with covariate 
+```{r}
+rmse_6<-modelr::rmse(mod6,els_test); rmse_6
+```
+My model improved negligibly.

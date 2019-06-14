@@ -1,0 +1,53 @@
+Gavarkavich
+
+# Problem 1 - Plot
+```{r}
+## Prep RStudio
+
+library(tidyverse)
+library(forcats)
+library(modelr)
+
+load("els.RData")
+
+## Plot DV of math as function of IV of reading
+g1<-ggplot(data=els,aes(x=bynels2r,y=bynels2m))
+g1<-g1+geom_point(alpha=.5,size=.25) 
+g1
+
+```
+
+# Problem 2 - Scale adjusted
+```{r}
+els_sum<-els%>%
+  mutate(lit_rank=percent_rank(bynels2r)*100)%>%
+  mutate(lit_rank_r=round(lit_rank))%>%
+  group_by(lit_rank_r)%>%
+  summarize(test_mean=mean(bynels2m,na.omit=TRUE))
+g1a<-g1a+geom_point()
+g1a<-g1a+geom_smooth(method="lm") 
+g1a
+```
+
+
+# Problem 3 - Line of best fit [Non-adjusted scale]
+```{r}
+g1<-g1+geom_smooth(method="lm")
+g1<-g1+geom_smooth(method = "loess")
+g1
+```
+
+# Problem 4 - Cleaned up
+```{r}
+## Label x and y axis, adjust points, change color of lines
+g1<-g1+geom_point(alpha=.25,size=.25) 
+g1<-g1+geom_smooth(method="lm", color="green")
+g1<-g1+geom_smooth(method = "loess")
+g1<-g1+geom_smooth(color="purple")+ labs(title = "Regression Lines: Reading Scores compared to Math Scores", x="Reading Test Scores", y="Math Test Scores")
+g1
+```
+
+
+# Problem 5 - Description 
+The graphic above shows that there is a linear relationship between reading and math scores. As reading scores increase math scores are prediected to increase. There is little difference between the linear regression line and the LOEES line. Due to the small difference I would use the linear regression since there does not seem to be a complicated curve in the data. The linear model shows the best possible result through the data points. 
+

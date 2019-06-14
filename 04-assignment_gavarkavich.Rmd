@@ -1,0 +1,79 @@
+## Prepare RStudio
+```{r} 
+library(tidyverse)
+library(haven)
+library(readxl)
+```
+
+## 1 - Panel data for OECD countries
+```{r}
+#Load data
+gas<-read_delim("https://www.wiley.com/legacy/wileychi/baltagi/supp/Gasoline.dat",
+                delim=" ",trim_ws = TRUE)
+
+save(gas,file="OECD.Rdata")
+
+#Clean data
+head(gas)
+
+##I really do not know how you'd tidy this data. To me, and reviewing the book, it makes sense to leave Austria as so many different rows because each represents a different year. If I knew the problem at hand I might have some guesses, but generally this looks pretty tidy to me. 
+```
+
+## 2 - U.S. National Election Survey data from 2004
+```{r}
+#Load data
+nes<-read_spss("http://www.uta.edu/faculty/story/DataSets/NES2004.sav")
+
+save(nes,file="nes.Rdata")
+
+#Clean data
+head(nes)
+
+##There was a lot of data in this so my approach would be to remove columns so you only have the data of interest. For example, opinions on abortion...
+nes2<-nes[ ,1:7]
+
+```
+
+
+## 3 - General social survey, student version
+```{r}
+#Load data
+gss<-read_excel("GeneralSocialSurvey1996ExcelDataStudentVersion.xls",skip=0,col_names = TRUE)
+
+save(gss,file="gss.Rdata")
+
+#Clean data
+head(gss)
+
+##Remove columns with a lot of missing data. Again for this one, it depends on what information I am hoping to gain from these data.
+gss2<-gss[ ,-(c(14:44))] 
+
+```
+
+## 4 - Statistical Discrimination or Prejudice
+```{r}
+#Load data
+maindata<-read_csv("mainData.csv",skip=0,col_names = TRUE)
+
+save(maindata,file="maindata.Rdata")
+
+#Clean data
+head(maindata)
+##In my job we always want to remove identifying information. In this case, there is an id so if you needed to reidentify for some reason you could.
+maindata2<-maindata[ ,-(c(10,11))] 
+
+```
+
+## 5 - Lalonde dataset
+```{r}
+#Load data
+psid<-read_dta("https://users.nber.org/~rdehejia/data/nsw.dta")
+
+#Clean data
+head(psid)
+##When I went to the website, it made more sense to me to upload the STATA file as opposed to the txt file and rename the variables. Otherwise, this data looks pretty tidy other than the "data_id" column not being necessary because they are all the same. 
+psid2<-psid[ ,-(c(1))] 
+
+
+```
+

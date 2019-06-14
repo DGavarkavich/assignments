@@ -1,0 +1,65 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Gavarkavich
+
+## First step, load libraries and dataset
+
+library(tidyverse)
+library(plotly)
+library(Metrics)
+load("pd.Rdata")
+
+## Problem 1 - Calculate the mean of the outcome; filter data into summarize and calculate mean
+pd%>%summarize(mean_homeown_rate=mean(homeown_rate,na.rm=TRUE))
+
+Our mean is 72.7
+
+## Problem 2 - Use mean as prediction - create new variable using mutate 
+pd<-pd%>%mutate(mean_homeown_rate=mean(homeown_rate,na.rm=TRUE))
+
+## Problem 3 - Summary measure of errors 
+First, we calculate each error. The error term for our prediction using unconditional means will be stored in the variable $h1$. This variable will be equal to the actual value of homeown_rate minues the mean value of homeown_rate 
+
+pd<-pd%>%mutate(h1=homeown_rate-mean_homeown_rate)
+
+  ## To calculate the summary, we use rmse  
+rmse_uncond_mean<-rmse(pd$homeown_rate,pd$mean_homeown_rate)
+
+rmse_uncond_mean
+
+Our RMSE is 7.653637
+
+## Problem 4 - mean at levels of predictor - Create a variable for quartiles of persons per household
+pd<-pd%>%mutate(person_per_hh_level=ntile(person_per_hh,4))
+
+pd%>%group_by(person_per_hh_level)%>% ## Group by predictor
+  ##Calculate mean at each level of predictor
+  summarize(homeown_rate=mean(homeown_rate))
+
+Our output is as follows:
+  person_per_hh_level homeown_rate
+                <int>        <dbl>
+1                   1         73.5
+2                   2         72.7
+3                   3         72.9
+4                   4         71.8
+
+## Problem 5 - Use mean as a prediction 
+pd<-pd%>%group_by(person_per_hh_level,homeown_rate)%>% ## Group by predictor
+  ##Calculate mean at each level of predictor
+  mutate(person_per_hh_level_and_homeown=mean(homeown_rate)) 
+  ## Ungroup
+  ungroup()%>% 
+  #Rank by prediction, with ties sorted randomly
+  mutate(person_per_hh_level_and_homeown_rank=rank(person_per_hh_level_and_homeown,
+                                                ties.method="random"))
+
+
+## Problem 6 - Summary measure of errors in predictions 
+
+rmse_cond_mean_h<-rmse(pd$homeown_rate, pd$person_per_hh_level_and_homeown)
+rmse_cond_mean_h
+
