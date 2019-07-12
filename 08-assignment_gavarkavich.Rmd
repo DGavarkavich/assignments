@@ -1,0 +1,93 @@
+Gavarkavich
+
+#Prepare R
+```{r libraries}
+library(tidyverse)
+library(knitr)
+library(modelr)
+library(caret)
+library(forcats)
+```
+
+#Download Data
+```{r}
+#Load data
+training<-read_csv("training.csv",skip=0,col_names = TRUE)
+save(training,file="training.Rdata")
+```
+
+#Problem 1 - Proportion of lemons
+```{r}
+table(training$IsBadBuy)
+prop.table(table(training$IsBadBuy))
+```
+
+#Problem 2 - Proportion of lemons by make 
+```{r}
+training%>%
+  count(IsBadBuy)%>% 
+  mutate(p=prop.table(n))%>% 
+  kable(format="markdown")
+prop.table(table(training$Make,training$IsBadBuy),margin=1)
+```
+
+#Problem 3 - Probability of being a lemon - linear
+```{r}
+# Linear model
+lm_mod<-lm(IsBadBuy~
+             Make+
+             VehicleAge+
+             Nationality+
+             Size+
+             Transmission,
+           data=training,y=TRUE,na.exclude=TRUE);summary(lm_mod)
+```
+
+#Problem 4 - Predictions
+```{r}
+training<-training%>%
+  add_predictions(lm_mod)%>% 
+  rename(pred_lm2=pred)%>% 
+  mutate(pred_lm_out=ifelse(pred_lm2>=.5,1,0))
+pred_table<-table(training$IsBadBuy,training$pred_lm_out)
+pred_table
+prop.table(pred_table)
+```
+
+#Problem 5 - Probability of being a lemon - logistic
+```{r}
+logit_mod<-glm(IsBadBuy~
+                 WarrantyCost+
+                 WheelTypeID+
+                 VehicleAge+
+                 VehYear+
+                 IsOnlineSale,
+             data=training,
+            na.action=na.exclude,
+            family=binomial(link="logit"),
+               y=TRUE)
+summary(logit_mod)
+```
+
+#Problem 6 - Predictions
+```{r}
+training<-training%>%
+  mutate(pred_logit=predict(logit_mod,type="response"))
+training<-training%>%
+    mutate(pred_logit_out=ifelse(pred_logit>=.3,1,0))
+training<-training%>%
+    mutate(pred_logit_out=as.factor(pred_logit_out))
+training<-training%>%
+    mutate(IsBadBuy=as.factor(IsBadBuy))
+predlogitlm_table <- table(training$IsBadBuy,training$pred_logit_out)
+predlogitlm_table
+prop.table(predlogitlm_table)
+
+```
+
+#Problem 7 - Confusion Matrix 
+```{r}
+confusionMatrix(data=as.factor(training$pred_logit_out),reference=as.factor(training$IsBadBuy))
+confusionMatrix(as.factor(training$IsBadBuy),reference=as.factor(training$pred_lm_out))
+
+```

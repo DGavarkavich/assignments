@@ -1,0 +1,78 @@
+Gavarkavich
+
+#Prepare R
+```{r libraries}
+library(tidyverse)
+library(knitr)
+library(modelr)
+library(caret)
+library(forcats)
+```
+
+#Download Data
+```{r}
+#Load data
+training<-read_csv("training.csv",skip=0,col_names = TRUE)
+save(training,file="training.Rdata")
+```
+
+#Problem 1- plot probability of car being bad buy by make
+```{r}
+badmake<-training%>%
+  group_by(Make)%>%
+  summarize(prob_bad=mean(IsBadBuy,na.rm=TRUE))
+
+gg1<-ggplot(badmake,aes(y=prob_bad,x=Make))
+gg1<-gg1+geom_bar(stat="identity",position="dodge")
+gg1<-gg1+xlab("Make")+ylab("Pr(Bad buy)")
+gg1<-gg1+theme(legend.title=element_blank())
+
+gg1<-gg1+geom_text(aes(label=round(prob_bad,2)),
+                   position=position_dodge(width=.9),
+                   vjust=-.25)
+gg1
+```
+
+#Problem 2 - table that shows probability of a car being a bad buy by make
+```{r}
+tab_make<-with(training,table(Make,IsBadBuy))
+colnames(tab_make)<-c("Not Bad","Bad")
+tab_make_prop<-prop.table(tab_make,margin=1)
+kable(round(tab_make_prop*100,1))
+
+
+```
+
+#Problem 3 - heatmap of a probability of a car being a bad buy by make and acquisition type
+```{r}
+training_make<-training%>%group_by(Make,Auction)%>%
+  summarize(prob_bad=mean(IsBadBuy,na.rm=TRUE))%>%
+  arrange(-prob_bad)
+training_make<-training_make%>%filter(!(is.na(Make)),!(is.na(Auction)))
+gg<-ggplot(training_make,
+           aes(x=as.factor(Make),
+               y=as.factor(Auction),fill=prob_bad))
+gg<-gg+geom_tile()
+gg<-gg+scale_fill_gradient(low="white",high="red")
+gg<-gg+xlab("Make")+ylab("Auction")
+gg<-gg+theme(legend.title=element_blank())
+gg
+##I did not know which variable to use for acquisition type so used auction
+```
+
+#Problem 4 - plot that shows probability of car being a bad buy by year and make
+```{r}
+training_year<-training%>%group_by(VehYear, Make)%>%
+  summarize(prob_bad2=mean(IsBadBuy,na.rm=TRUE))%>%
+  arrange(-prob_bad2)
+training_make<-training_make%>%filter(!(is.na(Make)))
+gg<-ggplot(training_year,
+           aes(x=as.factor(VehYear),
+               y=as.factor(Make),fill=prob_bad2))
+gg<-gg+geom_tile()
+gg<-gg+scale_fill_gradient(low="white",high="red")
+gg<-gg+xlab("Year")+ylab("Make")
+gg<-gg+theme(legend.title=element_blank())
+gg
+```
+

@@ -1,0 +1,85 @@
+Gavarkavich
+
+#Prepare RStudio
+```{r}
+library(tidyverse)
+library(rvest)
+library(acs)
+library(lubridate)
+library(noncensus)
+library(tigris)
+```
+
+#Problem 1 - Zip Codes in Mecklenburg County on education levels
+```{r}
+lookup_code("NC","Mecklenburg")
+state_fips<-"37"
+county_stub<-"119"
+county_fips<-paste0(state_fips,county_stub)
+county_to_zip<-read_csv("http://www2.census.gov/geo/docs/maps-data/data/rel/zcta_county_rel_10.txt")
+save(county_to_zip,file="county_to_zip.Rdata")
+names(county_to_zip)<-tolower(names(county_to_zip))
+county_to_zip<-county_to_zip%>%
+  filter(state==as.numeric(state_fips),county==county_stub)%>%
+  select(zcta5,state,county)
+ziplist<-county_to_zip$zcta5
+data(zip_codes)
+city_zip<-zip_codes%>%filter(zip%in%ziplist)%>%select(zip,city)
+city_zip<-city_zip%>%arrange(as.numeric(zip))
+acs_key<-"75123e8d0594cc45e1142bcd52cabeb050c1f7c1"
+api.key.install(acs_key, file = "key.rda")
+select_zip<-geo.make(zip.code=ziplist)
+county_educ=acs.fetch(geography=select_zip,
+                      endyear=2016,
+                      table.number="B15002",
+                      col.names="pretty",verbose=T)
+```
+
+#Problem 2 - Proportion with Bachelor's degree or higher by zip code
+```{r}
+acs.colnames(county_educ)
+prop_coll_above<-divide.acs(numerator=(county_educ[,15]+
+                                      county_educ[,16]+
+                                      county_educ[,17]+
+                                      county_educ[,18]+
+                                      county_educ[,32]+
+                                      county_educ[,33]+
+                                      county_educ[,34]+
+                                      county_educ[,35]),
+                            denominator=county_educ[,1])
+prop_coll_above
+```
+
+#Problem 3- Zip Codes in Mecklenburg County on family income
+```{r}
+county_income<-acs.fetch(geography=select_zip, 
+                        endyear = 2016,
+                        table.number="B19001", 
+                        col.names="pretty")
+acs.colnames(county_income)
+```
+
+#Problem 4 - Proportion of population that has family income above $75,000
+```{r}
+prop_above_75<-divide.acs(numerator=(county_income[,13]+
+                            county_income[,14]+
+                            county_income[,15]+
+                            county_income[,16]+
+                            county_income[,17]),
+                          denominator=county_income[,1])
+
+prop_above_75
+```
+ 
+#Problem 5 - Proportion of residents with incomes above $75,000 as function of education 
+```{r}
+county_df<-tibble(substr(geography(county_educ)[[1]],7,11),
+                       as.numeric(estimate(prop_coll_above)),                   as.numeric(estimate(prop_above_75)))
+names(county_df)<-c("zip","college_educ","income_75")
+save(county_df,file="dav.RData")
+
+gg<-ggplot(county_df,aes(x=college_educ,y=income_75))
+gg<-gg+geom_point()
+gg
+```
+
