@@ -1,0 +1,89 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Gavarkavich 
+
+#Prepare R Studio
+```{r,echo=FALSE}
+rm(list=ls())
+library(tidyverse)
+library(forcats)
+library(ModelMetrics)
+library(modelr)
+library(caret)
+load("els_train.RData")
+load("els_test.RData")
+load("els.RData")
+```
+
+#Assignment 5
+To make it easier on myself and not have to go back and forth, I copied the code from assignment 5 below. 
+```{r}
+mod5<-lm(bynels2r~byses1,data=els_train) 
+summary(mod5)
+confint(mod5)
+rmse_5<-modelr::rmse(mod5,els_test);rmse_5
+mod6<-lm(bynels2r~as.factor(bypared)+
+           byses1,
+          data=els_train)
+summary(mod6) 
+els_train<-els_train%>%add_predictions(mod6)%>%rename(pred2=pred)
+rmse_6<-modelr::rmse(mod6,els_test); rmse_6
+```
+
+#Assignment 10
+##Problem 1 
+10-fold cross validation of linear model predicting reading scores as function of at least 2 covariates; summary table or graphic of RMSEs from cross validation
+```{r}
+##In assignment 5, I used SES and parent education. I am using els not els_test or els_train.First I need to define the model
+
+mod1_formula<-formula(bynels2r~byses1+
+                        bypared)
+basic.mod<-lm(mod1_formula,
+              data=els); summary(basic.mod)
+
+#Then apply kfold
+els_cf<-els%>%
+  crossv_kfold(10)
+els_cf
+
+rmse_mod1<-els_cf %>% 
+  mutate(train = map(train, as_tibble)) %>% ## Convert to tibbles
+  mutate(model = map(train, ~ lm(mod1_formula,
+                                 data = .))) %>%
+  mutate(rmse = map2_dbl(model, test, rmse)) %>% ## apply model, get rmse
+  select(.id, rmse) ## pull just id and rmse 
+
+summary(rmse_mod1$rmse)
+
+gg<-ggplot(rmse_mod1,aes(rmse))
+gg<-gg+geom_density()
+gg
+```
+
+
+##Problem 2
+Using random partition, create 100 separate cross validations 
+```{r}
+els_cv<-els%>%
+  crossv_mc(n=100,test=.2)
+els_cv
+
+mod1_rmse_cv<-els_cv %>% 
+  mutate(train = map(train, as_tibble)) %>% 
+  mutate(model = map(train, ~ lm(mod1_formula, data = .)))%>%
+  mutate(rmse = map2_dbl(model, test, rmse))%>% 
+  select(.id, rmse)  
+
+mod1_rmse_cv
+
+summary(mod1_rmse_cv$rmse)
+
+gg<-ggplot(mod1_rmse_cv,aes(rmse))
+gg<-gg+geom_density(bins=50,fill="blue",alpha=.2)
+gg
+
+```
+
